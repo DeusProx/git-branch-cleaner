@@ -9,7 +9,7 @@ use ratatui::Terminal;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::widgets::Paragraph;
 
-use git2::{Repository, FetchOptions, Cred, Branch, Mailmap};
+use git2::{Repository, FetchOptions, Cred};
 use ssh2_config::{SshConfig, ParseRule};
 
 fn main() -> Result<()> {
@@ -121,21 +121,6 @@ pub fn term_terminate(mut terminal: Terminal<CrosstermBackend<Stdout>>) -> Resul
     Ok(())
 }
 
-pub fn extract_line(branch: Branch, mailmap: &Mailmap) -> Result<String> {
-    let branch_name = branch.name().unwrap().unwrap().to_string();
-    let branch_ref = branch.into_reference();
-    let commit = branch_ref.peel_to_commit().unwrap();
-    let author = commit.author_with_mailmap(mailmap).unwrap();
-
-    let short_id = String::from_utf8(commit.as_object().short_id().unwrap().to_vec()).unwrap();
-    let summary: &str = commit.summary().unwrap();
-    let author_name = author.name().unwrap();
-    let author_email = author.email().unwrap().clone();
-
-    let line = format!("{:?} {} \"{}\" - {}|{}", short_id, author_name, author_email, branch_name, summary);
-    Ok(line)
-}
-
 pub fn get_cred(domain: &str, username_from_url: &str) -> Result<Cred> {
     let config = SshConfig::parse_default_file(ParseRule::STRICT).expect("Failed to parse configuration");
     let github_config = config.query(domain);
@@ -170,3 +155,4 @@ pub fn get_domain(url: &str) -> Result<&str> {
     let domain = &uri[..domain_end];
     Ok(domain)
 }
+
