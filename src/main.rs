@@ -4,6 +4,7 @@ use crossterm::ExecutableCommand;
 use crossterm::event::{self, KeyCode, KeyEventKind};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 
+use git_branch_cleaner::BranchDetails;
 use ratatui::Terminal;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::widgets::Paragraph;
@@ -65,10 +66,14 @@ fn main() -> Result<()> {
     let branches = repo.branches(None).unwrap();
     // let branches = repo.branches(Some(git2::BranchType::Remote)).unwrap();
 
-    let text = branches.map(|branch_result| {
+    let details = branches.map(|branch_result| {
         let branch = branch_result.unwrap().0;
-        let line = extract_line(branch, &mailmap).unwrap();
-        line
+        let branchdetails = BranchDetails::get_details(branch, &mailmap).unwrap();
+        branchdetails
+    });
+
+    let text = details.map(|branchdetails| {
+        branchdetails.to_string()
     })
     .collect::<Vec<String>>();
 
