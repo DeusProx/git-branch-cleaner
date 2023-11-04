@@ -1,4 +1,4 @@
-use std::io;
+use std::io::Result;
 
 use git2::{Branch, Mailmap, Oid};
 
@@ -12,7 +12,7 @@ pub struct BranchDetails {
 }
 
 impl BranchDetails {
-    pub fn get_details(branch: Branch, mailmap: &Mailmap) -> Result<BranchDetails, io::Error> {
+    pub fn get_details(branch: Branch, mailmap: &Mailmap) -> Result<BranchDetails> {
         let branch_name = branch.name().unwrap().unwrap().to_string();
         let branch_ref = branch.into_reference();
         let commit = branch_ref.peel_to_commit().unwrap().clone();
