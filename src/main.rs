@@ -4,7 +4,7 @@ use crossterm::ExecutableCommand;
 use crossterm::event::{self, KeyCode, KeyEventKind};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 
-use git_branch_cleaner::{BranchDetails, get_domain};
+use git_branch_cleaner::{BranchDetails, get_domain, List};
 use ratatui::Terminal;
 use ratatui::prelude::CrosstermBackend;
 use ratatui::widgets::Paragraph;
@@ -13,6 +13,7 @@ use git2::{Repository, FetchOptions, Cred};
 use ssh2_config::{SshConfig, ParseRule};
 
 fn main() -> Result<()> {
+
     let repo = Repository::open("./").unwrap();
     let mut remote = repo.find_remote("origin").unwrap();
     let _refs = repo.references().unwrap();
@@ -72,17 +73,14 @@ fn main() -> Result<()> {
         branchdetails
     });
 
-    let text = details.map(|branchdetails| {
-        branchdetails.to_string()
-    })
-    .collect::<Vec<String>>();
+    let list: List<BranchDetails> = List::new(details.collect::<Vec<BranchDetails>>());
 
     // Render TUI
     let mut terminal = term_setup().unwrap();
     loop {
         terminal.draw(|frame| {
             let area = frame.size();
-            frame.render_widget(Paragraph::new(format!("Welcome to Git Branch Cleaner! (Leave by pressing q)\n{}", text.join("\n"))), area);
+            frame.render_widget(Paragraph::new(format!("Welcome to Git Branch Cleaner! (Leave by pressing q)\n{}", list)), area);
         })?;
 
         if event::poll(std::time::Duration::from_millis(100))? {

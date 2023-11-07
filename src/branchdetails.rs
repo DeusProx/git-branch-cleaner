@@ -1,5 +1,5 @@
-use std::io::Result;
-
+use core::fmt;
+use std::io;
 use git2::{Branch, Mailmap, Oid};
 
 pub struct BranchDetails {
@@ -12,7 +12,7 @@ pub struct BranchDetails {
 }
 
 impl BranchDetails {
-    pub fn get_details(branch: Branch, mailmap: &Mailmap) -> Result<Self> {
+    pub fn get_details(branch: Branch, mailmap: &Mailmap) -> io::Result<Self> {
         let branch_name = branch.name().unwrap().unwrap().to_string();
         let commit = branch.into_reference().peel_to_commit().unwrap();
         let author = commit.author_with_mailmap(mailmap).unwrap().clone();
@@ -31,8 +31,15 @@ impl BranchDetails {
         })
     }
 
-    pub fn to_string(&self) -> String {
-        format!(
+    pub fn get_oid(&self) -> Oid {
+        self.oid
+    }
+}
+
+impl fmt::Display for BranchDetails {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
             "{:} {} \"{}\" - {}|{}",
             self.short_id,
             self.author_name,
@@ -40,10 +47,6 @@ impl BranchDetails {
             self.name,
             self.summary
         )
-    }
-
-    pub fn get_oid(&self) -> Oid {
-        self.oid
     }
 }
 
