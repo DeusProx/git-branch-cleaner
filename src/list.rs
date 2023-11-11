@@ -1,63 +1,63 @@
 use core::fmt;
 
 #[derive(PartialEq)]
-pub enum MarkableState {
+pub enum MarkState {
     Unmarked,
     Marked,
 }
 
-pub enum MarkableAction {
+pub enum MarkAction {
     Mark,
     Unmark,
     Toggle,
 }
 
 // Discussion: This would be awesome as a trait which I could just attach.
-impl MarkableState {
+impl MarkState {
     pub fn new() -> Self {
-        MarkableState::Unmarked
+        MarkState::Unmarked
     }
-    pub fn is(&self, state: &MarkableState) -> bool {
+    pub fn is(&self, state: &MarkState) -> bool {
         self == state
     }
 
     /* Discussion: What is better? */
-    pub fn act(&mut self, action: &MarkableAction) {
+    pub fn act(&mut self, action: &MarkAction) {
         *self = match action {
-            MarkableAction::Mark => MarkableState::Marked,
-            MarkableAction::Unmark => MarkableState::Unmarked,
-            MarkableAction::Toggle => match self {
-                MarkableState::Unmarked => MarkableState::Marked,
-                MarkableState::Marked => MarkableState::Unmarked,
+            MarkAction::Mark => MarkState::Marked,
+            MarkAction::Unmark => MarkState::Unmarked,
+            MarkAction::Toggle => match self {
+                MarkState::Unmarked => MarkState::Marked,
+                MarkState::Marked => MarkState::Unmarked,
             }
         };
     }
     /* OR */
     #[deprecated(since="0.1.0", note="please use `act` instead")]
     pub fn unmark(&self) -> Self {
-        MarkableState::Unmarked
+        MarkState::Unmarked
     }
     #[deprecated(since="0.1.0", note="please use `act` instead")]
     pub fn mark(&self) -> Self {
-        MarkableState::Marked
+        MarkState::Marked
     }
     #[deprecated(since="0.1.0", note="please use `act` instead")]
     pub fn toggle(&self) -> Self {
         match self {
-            MarkableState::Unmarked => MarkableState::Marked,
-            MarkableState::Marked => MarkableState::Unmarked,
+            MarkState::Unmarked => MarkState::Marked,
+            MarkState::Marked => MarkState::Unmarked,
         }
     }
 }
 
-impl fmt::Display for MarkableState {
+impl fmt::Display for MarkState {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
             "{}",
             match self {
-                MarkableState::Unmarked => "[ ]",
-                MarkableState::Marked   => "[x]",
+                MarkState::Unmarked => "[ ]",
+                MarkState::Marked   => "[x]",
             }
         )
     }
@@ -69,53 +69,53 @@ mod markable_state_tests {
 
     #[test]
     fn newable() {
-        let state = MarkableState::new();
-        assert!(state == MarkableState::Unmarked);
+        let state = MarkState::new();
+        assert!(state == MarkState::Unmarked);
     }
 
     #[test]
     fn comparable() {
-        assert!(MarkableState::Marked.is(&MarkableState::Marked) == true);
-        assert!(MarkableState::Marked.is(&MarkableState::Unmarked) == false);
-        assert!(MarkableState::Unmarked.is(&MarkableState::Marked) == false);
-        assert!(MarkableState::Unmarked.is(&MarkableState::Unmarked) == true);
+        assert!(MarkState::Marked.is(&MarkState::Marked) == true);
+        assert!(MarkState::Marked.is(&MarkState::Unmarked) == false);
+        assert!(MarkState::Unmarked.is(&MarkState::Marked) == false);
+        assert!(MarkState::Unmarked.is(&MarkState::Unmarked) == true);
     }
 
     #[test]
     fn markable() {
-        let mut state = MarkableState::Unmarked;
-        state.act(&MarkableAction::Mark);
-        assert!(state == MarkableState::Marked);
-        state.act(&MarkableAction::Mark);
-        assert!(state == MarkableState::Marked);
+        let mut state = MarkState::Unmarked;
+        state.act(&MarkAction::Mark);
+        assert!(state == MarkState::Marked);
+        state.act(&MarkAction::Mark);
+        assert!(state == MarkState::Marked);
     }
 
     #[test]
     fn unmarkable() {
-        let mut state = MarkableState::Marked;
-        state.act(&MarkableAction::Unmark);
-        assert!(state == MarkableState::Unmarked);
-        state.act(&MarkableAction::Unmark);
-        assert!(state == MarkableState::Unmarked);
+        let mut state = MarkState::Marked;
+        state.act(&MarkAction::Unmark);
+        assert!(state == MarkState::Unmarked);
+        state.act(&MarkAction::Unmark);
+        assert!(state == MarkState::Unmarked);
     }
 
     #[test]
     fn togglable() {
-        let mut state = MarkableState::Unmarked;
-        state.act(&MarkableAction::Toggle);
-        assert!(state == MarkableState::Marked);
-        state.act(&MarkableAction::Toggle);
-        assert!(state == MarkableState::Unmarked);
+        let mut state = MarkState::Unmarked;
+        state.act(&MarkAction::Toggle);
+        assert!(state == MarkState::Marked);
+        state.act(&MarkAction::Toggle);
+        assert!(state == MarkState::Unmarked);
     }
     #[test]
     fn displayable() {
-        assert!(MarkableState::Unmarked.to_string() == "[ ]");
-        assert!(MarkableState::Marked.to_string() == "[x]");
+        assert!(MarkState::Unmarked.to_string() == "[ ]");
+        assert!(MarkState::Marked.to_string() == "[x]");
     }
 }
 
 pub struct Item<T> {
-    pub mark_state: MarkableState,
+    pub mark_state: MarkState,
     pub data: T,
 }
 
@@ -148,7 +148,7 @@ impl<T> Item<T> {
 impl<T> From<T> for Item<T> {
     fn from(value: T) -> Self {
         Item {
-            mark_state: MarkableState::new(),
+            mark_state: MarkState::new(),
             data: value
         }
     }
@@ -191,7 +191,7 @@ impl<T> List<T>  {
         &self.elements
     }
 
-    pub fn get_by_state(&self, state: &MarkableState) -> Vec<&Item<T>>{
+    pub fn get_by_state(&self, state: &MarkState) -> Vec<&Item<T>>{
         self.elements.iter().enumerate().filter_map(|(_index, element)|
             if element.mark_state.is(&state) {
                 Some(element)
@@ -201,7 +201,7 @@ impl<T> List<T>  {
         ).collect::<Vec<_>>()
     }
 
-    pub fn act(&mut self, action: &MarkableAction, range: &[usize]) {
+    pub fn act(&mut self, action: &MarkAction, range: &[usize]) {
         for index in range {
             let item = self.elements.get_mut(*index).unwrap();
             item.mark_state.act(action);
