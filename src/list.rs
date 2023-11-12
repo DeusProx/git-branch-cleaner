@@ -1,6 +1,6 @@
 use core::fmt;
 
-use ratatui::{widgets::{StatefulWidget, Widget}, style::{Style, Color}};
+use ratatui::{widgets::StatefulWidget, style::Style};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum MarkState {
@@ -248,7 +248,33 @@ impl<T> fmt::Display for List<T> where
 pub struct DisplayState {
     pub offset: usize,
     pub current: usize,
-    pub style: Style, // Discussion: Does this belong to DisplayState of or List?
+    normal: Style,
+    highlight: Style,
+}
+
+pub enum ListStyle {
+    Highlight { style: Style },
+    Normal { style: Style },
+}
+
+pub enum ListMoves {
+    Up,
+    Down,
+}
+
+impl DisplayState {
+    pub fn act(&mut self, movement: ListMoves) {
+        match movement {
+            ListMoves::Up => self.current -= 1,
+            ListMoves::Down => self.current += 1,
+        }
+    }
+    pub fn style(&mut self, style: ListStyle) {
+        match style {
+            ListStyle::Normal { style } => self.normal = style,
+            ListStyle::Highlight { style } => self.highlight = style,
+        }
+    }
 }
 
 impl<T> StatefulWidget for List<T> where
@@ -261,28 +287,18 @@ impl<T> StatefulWidget for List<T> where
         let width = area.width as usize;
         let border = "─".repeat(width);
 
-        buf.set_string(0, 1,&border, Style::default());
+        buf.set_string(0, 1,&border, state.normal);
         for(index, item) in self.displayed(state.offset, height - 4).iter().enumerate() {
             let style = match state.current != state.offset + index {
-                true => Style::default(),
-                false => Style::default().bg(Color::DarkGray),
+                true => state.normal,
+                false => state.highlight,
             };
 
             buf.set_string(area.x, area.y + 2 + index as u16, item.to_string(), style);
         }
-        buf.set_string(0, area.height - 2, &border, Style::default());
+        buf.set_string(0, area.height - 2, &border, state.normal);
     }
 }
-
-impl<T> Widget for List<T> where
-    T: fmt::Display
-{
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        let mut state = DisplayState::default();
-        StatefulWidget::render(self, area, buf, &mut state);
-    }
-}
-
 
 #[cfg(test)]
 mod list_tests {
@@ -294,3 +310,4 @@ mod list_tests {
         assert!(list.len() == 3);
     }
 }
+

@@ -4,11 +4,12 @@ use crossterm::execute;
 use crossterm::event::{self, KeyCode, KeyEventKind};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 
-use git_branch_cleaner::{BranchDetails, get_domain, List};
+use git_branch_cleaner::{BranchDetails, get_domain, List, DisplayState, ListMoves, MarkAction, ListStyle};
 use ratatui::Terminal;
 use ratatui::prelude::CrosstermBackend;
 
 use git2::{Repository, FetchOptions, Cred};
+use ratatui::style::{Style, Color};
 use ssh2_config::{SshConfig, ParseRule};
 
 fn main() -> Result<()> {
@@ -72,13 +73,15 @@ fn main() -> Result<()> {
         branchdetails
     });
 
-    let list: List<BranchDetails> = List::new(details.collect::<Vec<BranchDetails>>());
+    let mut state = DisplayState::default();
+    state.style(ListStyle::Highlight { style: Style::default().bg(Color::DarkGray) });
+    let mut list: List<BranchDetails> = List::new(details.collect::<Vec<BranchDetails>>());
 
     // Render TUI
     let mut terminal = term_setup().unwrap();
     loop {
         terminal.draw(|frame| {
-            frame.render_widget(list.clone(), frame.size());
+            frame.render_stateful_widget(list.clone(), frame.size(), &mut state);
         })?;
 
         if event::poll(std::time::Duration::from_millis(100))? {
@@ -89,6 +92,9 @@ fn main() -> Result<()> {
             }) = event::read()? {
                 match char {
                     'q' => break,
+                    'j' => state.act(ListMoves::Down),
+                    'k' => state.act(ListMoves::Up),
+                    ' ' => list.act(&MarkAction::Toggle, &[state.current + state.offset]),
                     _ => {}
                 }
             }
