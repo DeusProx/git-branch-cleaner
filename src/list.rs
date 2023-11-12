@@ -200,15 +200,15 @@ impl<T> List<T>  {
         self.items.len()
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub fn empty(&self) -> bool {
         self.items.is_empty()
     }
 
-    pub fn get_all(&self) -> &Vec<Item<T>> {
+    pub fn all(&self) -> &Vec<Item<T>> {
         &self.items
     }
 
-    pub fn get_by_state(&self, state: &MarkState) -> Vec<&Item<T>> {
+    pub fn by_state(&self, state: &MarkState) -> Vec<&Item<T>> {
         self.items.iter().enumerate().filter_map(|(_index, element)|
             if element.mark_state.is(&state) {
                 Some(element)
@@ -218,7 +218,7 @@ impl<T> List<T>  {
         ).collect::<Vec<_>>()
     }
 
-    fn get_displayed(&self, start: usize, len: usize) -> &[Item<T>] {
+    fn displayed(&self, start: usize, len: usize) -> &[Item<T>] {
         if start > self.items.len() {
             return &[];
         }
@@ -233,7 +233,7 @@ impl<T> fmt::Display for List<T> where
     T: fmt::Display,
 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for item in self.get_all() {
+        for item in self.all() {
             write!(
                 formatter,
                 "{}\n",
@@ -262,7 +262,7 @@ impl<T> StatefulWidget for List<T> where
         let border = "─".repeat(width);
 
         buf.set_string(0, 1,&border, Style::default());
-        for(index, item) in self.get_displayed(state.offset, height - 4).iter().enumerate() {
+        for(index, item) in self.displayed(state.offset, height - 4).iter().enumerate() {
             let style = match state.current != state.offset + index {
                 true => Style::default(),
                 false => Style::default().bg(Color::DarkGray),
@@ -294,4 +294,3 @@ mod list_tests {
         assert!(list.len() == 3);
     }
 }
-
