@@ -263,15 +263,13 @@ impl<T> StatefulWidget for List<T> where
 
         buf.set_string(0, 1,&border, Style::default());
         for(index, item) in self.get_displayed(state.offset, height - 4).iter().enumerate() {
-            let style = if state.current != state.offset + index {
-                Style::default()
-            } else {
-                Style::default().bg(Color::DarkGray)
+            let style = match state.current != state.offset + index {
+                true => Style::default(),
+                false => Style::default().bg(Color::DarkGray),
             };
 
             buf.set_string(area.x, area.y + 2 + index as u16, item.to_string(), style);
         }
-        //buf.set_string(0, area.height - 2, "▁".repeat(width), Style::default());
         buf.set_string(0, area.height - 2, &border, Style::default());
     }
 }
