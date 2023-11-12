@@ -110,7 +110,6 @@ pub fn term_setup() -> Result<Terminal<CrosstermBackend<Stdout>>> {
 pub fn term_terminate(mut terminal: Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
     terminal.show_cursor()?;
     terminal.clear()?;
-    // print!("\x1B[2J\x1B[1;1H");
     disable_raw_mode()?;
     execute!(stdout(), LeaveAlternateScreen)?;
 
