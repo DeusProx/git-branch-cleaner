@@ -172,7 +172,7 @@ impl<T> fmt::Display for Item<T> where
 
 #[derive(Clone)]
 pub struct List<T> {
-    elements: Vec<Item<T>>,
+    items: Vec<Item<T>>,
 }
 
 /**
@@ -183,33 +183,33 @@ pub struct List<T> {
  *   - Should the return value of get_displayed return a result and throw errors?
  */
 impl<T> List<T>  {
-    pub fn new(elements: Vec<T>) -> List<T> {
+    pub fn new(items: Vec<T>) -> List<T> {
         List {
-            elements: elements.into_iter().map(|element| element.into()).collect(),
+            items: items.into_iter().map(|element| element.into()).collect(),
         }
     }
 
     pub fn act(&mut self, action: &MarkAction, range: &[usize]) {
         for index in range {
-            let item = self.elements.get_mut(*index).unwrap();
+            let item = self.items.get_mut(*index).unwrap();
             item.mark_state.act(action);
         }
     }
 
     pub fn len(&self) -> usize {
-        self.elements.len()
+        self.items.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.elements.is_empty()
+        self.items.is_empty()
     }
 
     pub fn get_all(&self) -> &Vec<Item<T>> {
-        &self.elements
+        &self.items
     }
 
     pub fn get_by_state(&self, state: &MarkState) -> Vec<&Item<T>> {
-        self.elements.iter().enumerate().filter_map(|(_index, element)|
+        self.items.iter().enumerate().filter_map(|(_index, element)|
             if element.mark_state.is(&state) {
                 Some(element)
             } else {
@@ -219,13 +219,13 @@ impl<T> List<T>  {
     }
 
     fn get_displayed(&self, start: usize, len: usize) -> &[Item<T>] {
-        if start > self.elements.len() {
+        if start > self.items.len() {
             return &[];
         }
-        if start + len > self.elements.len() {
-            return self.elements.get(start..self.elements.len()).unwrap();
+        if start + len > self.items.len() {
+            return self.items.get(start..self.items.len()).unwrap();
         }
-        self.elements.get(start..(start + len)).unwrap()
+        self.items.get(start..(start + len)).unwrap()
     }
 }
 
