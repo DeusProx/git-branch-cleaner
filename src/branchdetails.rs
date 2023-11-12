@@ -2,6 +2,7 @@ use core::fmt;
 use std::io;
 use git2::{Branch, Mailmap, Oid};
 
+#[derive(Clone)]
 pub struct BranchDetails {
     name: String,
     oid: Oid,

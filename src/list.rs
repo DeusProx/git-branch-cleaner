@@ -1,6 +1,8 @@
 use core::fmt;
 
-#[derive(PartialEq)]
+use ratatui::{widgets::{StatefulWidget, Widget}, style::{Style, Color}};
+
+#[derive(Clone, Copy, PartialEq)]
 pub enum MarkState {
     Unmarked,
     Marked,
@@ -114,6 +116,7 @@ mod markable_state_tests {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Item<T> {
     pub mark_state: MarkState,
     pub data: T,
@@ -154,8 +157,7 @@ impl<T> From<T> for Item<T> {
     }
 }
 
-impl<T> fmt::Display for Item<T>
-where
+impl<T> fmt::Display for Item<T> where
     T: fmt::Display,
 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -168,14 +170,29 @@ where
     }
 }
 
+#[derive(Clone)]
 pub struct List<T> {
-    elements: Vec<Item<T>>
+    elements: Vec<Item<T>>,
 }
 
+/**
+ * Discussion:
+ *   This API certainly sucks and probably is not "idiomatic Rust", but how to conciliate?
+ *   - Return Slice/&[] or Iter or just a pointer to Vec?
+ *   - How to input data if you want to act on several elements? Slice? Range? Offset + Size?
+ *   - Should the return value of get_displayed return a result and throw errors?
+ */
 impl<T> List<T>  {
     pub fn new(elements: Vec<T>) -> List<T> {
         List {
             elements: elements.into_iter().map(|element| element.into()).collect(),
+        }
+    }
+
+    pub fn act(&mut self, action: &MarkAction, range: &[usize]) {
+        for index in range {
+            let item = self.elements.get_mut(*index).unwrap();
+            item.mark_state.act(action);
         }
     }
 
@@ -191,7 +208,7 @@ impl<T> List<T>  {
         &self.elements
     }
 
-    pub fn get_by_state(&self, state: &MarkState) -> Vec<&Item<T>>{
+    pub fn get_by_state(&self, state: &MarkState) -> Vec<&Item<T>> {
         self.elements.iter().enumerate().filter_map(|(_index, element)|
             if element.mark_state.is(&state) {
                 Some(element)
@@ -201,16 +218,18 @@ impl<T> List<T>  {
         ).collect::<Vec<_>>()
     }
 
-    pub fn act(&mut self, action: &MarkAction, range: &[usize]) {
-        for index in range {
-            let item = self.elements.get_mut(*index).unwrap();
-            item.mark_state.act(action);
+    fn get_displayed(&self, start: usize, len: usize) -> &[Item<T>] {
+        if start > self.elements.len() {
+            return &[];
         }
+        if start + len > self.elements.len() {
+            return self.elements.get(start..self.elements.len()).unwrap();
+        }
+        self.elements.get(start..(start + len)).unwrap()
     }
 }
 
-impl<T> fmt::Display for List<T>
-where
+impl<T> fmt::Display for List<T> where
     T: fmt::Display,
 {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -224,6 +243,48 @@ where
         Ok(())
     }
 }
+
+#[derive(Default)]
+pub struct DisplayState {
+    pub offset: usize,
+    pub current: usize,
+    pub style: Style, // Discussion: Does this belong to DisplayState of or List?
+}
+
+impl<T> StatefulWidget for List<T> where
+    T: fmt::Display
+{
+    type State = DisplayState;
+
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer, state: &mut Self::State) {
+        let height = area.height as usize;
+        let width = area.width as usize;
+        let border = "─".repeat(width);
+
+        buf.set_string(0, 1,&border, Style::default());
+        for(index, item) in self.get_displayed(state.offset, height - 4).iter().enumerate() {
+            let style = if state.current != state.offset + index {
+                Style::default()
+            } else {
+                Style::default().bg(Color::DarkGray)
+            };
+
+            buf.set_string(area.x, area.y + 2 + index as u16, item.to_string(), style);
+        }
+        //buf.set_string(0, area.height - 2, "▁".repeat(width), Style::default());
+        buf.set_string(0, area.height - 2, &border, Style::default());
+    }
+}
+
+impl<T> Widget for List<T> where
+    T: fmt::Display
+{
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
+        let mut state = DisplayState::default();
+        StatefulWidget::render(self, area, buf, &mut state);
+    }
+}
+
 
 #[cfg(test)]
 mod list_tests {

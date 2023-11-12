@@ -1,13 +1,12 @@
 use std::io::{Result, stdout, Write, Stdout};
 
-use crossterm::ExecutableCommand;
+use crossterm::execute;
 use crossterm::event::{self, KeyCode, KeyEventKind};
 use crossterm::terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 
 use git_branch_cleaner::{BranchDetails, get_domain, List};
 use ratatui::Terminal;
 use ratatui::prelude::CrosstermBackend;
-use ratatui::widgets::Paragraph;
 
 use git2::{Repository, FetchOptions, Cred};
 use ssh2_config::{SshConfig, ParseRule};
@@ -79,8 +78,7 @@ fn main() -> Result<()> {
     let mut terminal = term_setup().unwrap();
     loop {
         terminal.draw(|frame| {
-            let area = frame.size();
-            frame.render_widget(Paragraph::new(format!("Welcome to Git Branch Cleaner! (Leave by pressing q)\n{}", list)), area);
+            frame.render_widget(list.clone(), frame.size());
         })?;
 
         if event::poll(std::time::Duration::from_millis(100))? {
@@ -101,7 +99,7 @@ fn main() -> Result<()> {
 
 pub fn term_setup() -> Result<Terminal<CrosstermBackend<Stdout>>> {
     enable_raw_mode()?;
-    stdout().execute(EnterAlternateScreen)?;
+    execute!(stdout(), EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.hide_cursor()?;
     terminal.clear()?;
@@ -114,7 +112,7 @@ pub fn term_terminate(mut terminal: Terminal<CrosstermBackend<Stdout>>) -> Resul
     terminal.clear()?;
     // print!("\x1B[2J\x1B[1;1H");
     disable_raw_mode()?;
-    stdout().execute(LeaveAlternateScreen)?;
+    execute!(stdout(), LeaveAlternateScreen)?;
 
     Ok(())
 }
